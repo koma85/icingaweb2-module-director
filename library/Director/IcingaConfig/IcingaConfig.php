@@ -477,11 +477,6 @@ class IcingaConfig
             ->createFileFromDb('dependency')
             ;
 
-        if (! $this->isLegacy()) {
-            $this->configFile('zones.d/director-global/commands')
-                ->prepend("library \"methods\"\n\n");
-        }
-
         PrefetchCache::forget();
         IcingaHost::clearAllPrefetchCaches();
 
