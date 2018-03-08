@@ -4,6 +4,7 @@ namespace dipl\Html;
 
 use Exception;
 use Icinga\Exception\IcingaException;
+use Icinga\Util\Json;
 
 class Util
 {
@@ -102,11 +103,17 @@ class Util
 
             return $html;
         } else {
-            // TODO: Should we add a dedicated Exception class?
-            throw new IcingaException(
-                'String, Html Element or Array of such expected, got "%s"',
-                Util::getPhpTypeName($any)
-            );
+            // try to serialize as JSON
+            try {
+                $json = Json::encode($any, JSON_PRETTY_PRINT);
+                return new Element('pre', null, $json);
+            } catch (Exception $e) {
+                // TODO: Should we add a dedicated Exception class?
+                throw new IcingaException(
+                    'String, Html Element, Array or JSON serializable expected, got "%s"',
+                    Util::getPhpTypeName($any)
+                );
+            }
         }
     }
 
