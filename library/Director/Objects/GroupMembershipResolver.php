@@ -387,6 +387,8 @@ abstract class GroupMembershipResolver
             $objects = & $this->objects;
         }
 
+        $benchmarkTimes = array();
+
         foreach ($objects as $object) {
             if ($object->shouldBeRemoved()) {
                 continue;
@@ -394,6 +396,8 @@ abstract class GroupMembershipResolver
             if ($object->isTemplate()) {
                 continue;
             }
+            $benchStart = microtime(true);
+
             // TODO: fix this last hard host dependency
             $resolver = HostApplyMatches::prepare($object);
             foreach ($groups as $groupId => $filter) {
@@ -406,11 +410,23 @@ abstract class GroupMembershipResolver
                     $mappings[$groupId][$id] = $id;
                 }
             }
+
+            $benchmarkTimes[] = (microtime(true) - $benchStart) * 1000;
         }
+
+        Benchmark::measure(sprintf(
+            'Hostgroup apply recalculated - count=%d min=%d max=%d avg=%d (in ms)',
+            $c = count($benchmarkTimes),
+            min($benchmarkTimes),
+            max($benchmarkTimes),
+            array_sum($benchmarkTimes) / $c
+        ));
 
         foreach ($this->fetchMissingSingleAssignments() as $row) {
             $mappings[$row->group_id][$row->object_id] = $row->object_id;
         }
+
+        Benchmark::measure('Done with single assignments');
 
         $this->newMappings = $mappings;
     }
